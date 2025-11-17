@@ -2746,7 +2746,7 @@ module.exports = {
   registerUser,
   sendOTP,
   verifyOTP,
-  user,
+  kycSetup,
   idVerificationUpload,
   loginUser,
   logout,
