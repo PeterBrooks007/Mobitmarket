@@ -430,12 +430,51 @@ const kycSetup = asyncHandler(async (req, res) => {
               validateModifiedOnly: true,
             });
 
+            if (updatedUser) {
+              // Create a new inbox welcome message for user
+              const messages = [
+                {
+                  to: user.email,
+                  from: "Support Team",
+                  subject: "Welcome to mobitmarket",
+                  content: `Hello ${
+                    user.firstname + " " + user.lastname
+                  }, We're excited to have you on board. mobitmarket is an international investment company that combines the infrastructure and abilities of an investor with a best-in-class team of operations professionals. This unique combination of skills  has allowed us to become a top international Investment Platform.For more enquiry kindly contact your account manager or write directly with our live chat support on our platform or you can send a direct mail to us at support@mobitmarket.com.`,
+                },
+              ];
+
+              await Mailbox.updateOne(
+                { userId: user._id },
+                { $push: { messages: messages } },
+                { upsert: true } // Creates a new document if recipient doesn't exist
+              );
+
+              // Create a notification Account Activation object for user
+              const searchWord = "Support Team";
+
+              const notificationObject = {
+                to: `${user.firstname + " " + user.lastname}`,
+                from: searchWord,
+                notificationIcon: "CurrencyCircleDollar",
+                title: "Account Activation",
+                message: `Your trade account has been activated successfully. Welcome to mobitmarket`,
+                route: "/dashboard",
+              };
+
+              // Add the Notifications
+              await Notifications.updateOne(
+                { userId: user._id },
+                { $push: { notifications: notificationObject } },
+                { upsert: true } // Creates a new document if recipient doesn't exist
+              );
+            }
+
             return res.status(200).json(updatedUser);
           } else {
             res.status(404);
             throw new Error("User not found");
           }
-        } 
+        }
       )
       .end(compressedImageBuffer); // Use the file buffer for the upload
   } catch (err) {
@@ -1741,45 +1780,6 @@ const adminApproveId = asyncHandler(async (req, res) => {
 
   await sendEmail(subject, send_to, template, reply_to);
 
-  if (status === "VERIFIED") {
-    // Create a new inbox welcome message for user
-    const messages = [
-      {
-        to: user.email,
-        from: "Support Team",
-        subject: "Welcome to mobitmarket",
-        content: `Hello ${
-          user.firstname + " " + user.lastname
-        }, We're excited to have you on board. mobitmarket is an international investment company that combines the infrastructure and abilities of an investor with a best-in-class team of operations professionals. This unique combination of skills  has allowed us to become a top international Investment Platform.For more enquiry kindly contact your account manager or write directly with our live chat support on our platform or you can send a direct mail to us at support@mobitmarket.com.`,
-      },
-    ];
-
-    await Mailbox.updateOne(
-      { userId: user._id },
-      { $push: { messages: messages } },
-      { upsert: true } // Creates a new document if recipient doesn't exist
-    );
-
-    // Create a notification Account Activation object for user
-    const searchWord = "Support Team";
-
-    const notificationObject = {
-      to: `${user.firstname + " " + user.lastname}`,
-      from: searchWord,
-      notificationIcon: "CurrencyCircleDollar",
-      title: "Account Activation",
-      message: `Your trade account has been activated successfully. Welcome to mobitmarket`,
-      route: "/dashboard",
-    };
-
-    // Add the Notifications
-    await Notifications.updateOne(
-      { userId: user._id },
-      { $push: { notifications: notificationObject } },
-      { upsert: true } // Creates a new document if recipient doesn't exist
-    );
-  }
-
   res.status(200).json({
     data: updatedUser,
     message,
@@ -2746,7 +2746,7 @@ module.exports = {
   registerUser,
   sendOTP,
   verifyOTP,
-  kycSetup,
+  user,
   idVerificationUpload,
   loginUser,
   logout,
