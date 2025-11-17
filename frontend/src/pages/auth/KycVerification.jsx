@@ -47,17 +47,10 @@ const KycVerification = ({
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("md"));
   const dispatch = useDispatch();
-  const navigate = useNavigate()
+  const navigate = useNavigate();
 
-  const {
-    isSemiLoading,
-    user,
-    isError,
-    isSuccess,
-    kycSetupStatus,
-  } = useSelector((state) => state.auth);
-
-
+  const { isSemiLoading, user, isError, isSuccess, kycSetupStatus } =
+    useSelector((state) => state.auth);
 
   const [uploadLoading, setUploadLoading] = useState(false);
 
@@ -157,7 +150,7 @@ const KycVerification = ({
         return value && typeof value === "object" && value.code; // Check if an object with a code is selected
       }),
 
-      pin: yup
+    pin: yup
       .string()
       .matches(/^[0-9]+$/, "Pin must only contain numbers from 0 to 9") // Allows only digits 0-9
       .required("Pin is required")
@@ -249,13 +242,9 @@ const KycVerification = ({
   };
 
   useEffect(() => {
-    if (
-      !isSemiLoading &&
-      !isError &&
-      isSuccess &&
-      kycSetupStatus === "KYCSETUP_OK"
-    ) {
-      setActiveStep(1);
+    if (!isSemiLoading && !isError && isSuccess && user?.iskycSetup === true) {
+      navigate("/dashboard");
+      // setActiveStep(1);
       dispatch(RESET_AUTH());
     }
   }, [
@@ -264,9 +253,9 @@ const KycVerification = ({
     setActiveStep,
     isError,
     isSuccess,
-    kycSetupStatus,
+    user?.iskycSetup,
+    navigate,
   ]);
-
 
   const logoutUser = async () => {
     await dispatch(logout());
@@ -275,7 +264,6 @@ const KycVerification = ({
     dispatch(RESET_WITHDRAWAL());
     dispatch(RESET_DEPOSIT());
   };
-
 
   return (
     <>
@@ -618,16 +606,16 @@ const KycVerification = ({
                             sx={{ borderRadius: 2 }}
                           >
                             <MenuItem value={"STOCKS TRADING"}>
-                            STOCKS TRADING
+                              STOCKS TRADING
                             </MenuItem>
                             <MenuItem value={"CRYPTO TRADING"}>
-                            CRYPTO TRADING
+                              CRYPTO TRADING
                             </MenuItem>
                             <MenuItem value={"FOREX TRADING"}>
-                            FOREX TRADING
+                              FOREX TRADING
                             </MenuItem>
                             <MenuItem value={"BINARY OPTIONS"}>
-                            BINARY OPTIONS
+                              BINARY OPTIONS
                             </MenuItem>
                             <MenuItem value={"OTHERS"}>OTHERS</MenuItem>
                           </Select>
@@ -664,26 +652,26 @@ const KycVerification = ({
                       </Stack>
 
                       <Stack spacing={0.5} flex={1}>
-                          <Typography>Set a lock pin</Typography>
-                          <OutlinedInput
+                        <Typography>Set a lock pin</Typography>
+                        <OutlinedInput
                           type="text"
-                            name="pin"
-                            value={values?.pin}
-                            onBlur={handleBlur}
-                            onChange={handleChange}
-                            placeholder="Enter your pin"
-                            sx={{
-                              "& .MuiOutlinedInput-notchedOutline": {
-                                borderRadius: 2,
-                              },
-                            }}
-                          />
-                          {touched.pin && errors.pin && (
-                            <FormHelperText error sx={{ ml: 2 }}>
-                              {errors.pin}
-                            </FormHelperText>
-                          )}
-                        </Stack>
+                          name="pin"
+                          value={values?.pin}
+                          onBlur={handleBlur}
+                          onChange={handleChange}
+                          placeholder="Enter your pin"
+                          sx={{
+                            "& .MuiOutlinedInput-notchedOutline": {
+                              borderRadius: 2,
+                            },
+                          }}
+                        />
+                        {touched.pin && errors.pin && (
+                          <FormHelperText error sx={{ ml: 2 }}>
+                            {errors.pin}
+                          </FormHelperText>
+                        )}
+                      </Stack>
 
                       {/* Submit Button */}
                       <Button
@@ -707,7 +695,7 @@ const KycVerification = ({
                         Continue
                       </Button>
                       <Button
-                      startIcon={<Power/> }
+                        startIcon={<Power />}
                         type="button"
                         fullWidth
                         variant="outlined"
@@ -715,16 +703,13 @@ const KycVerification = ({
                         sx={{
                           // bgcolor: "text.primary",
                           color:
-                            theme.palette.mode === "light"
-                              ? "black"
-                              : "white",
+                            theme.palette.mode === "light" ? "black" : "white",
                           borderRadius: "10px",
                           fontWeight: "600",
                           "&:hover": {
                             bgcolor: "text.primary",
-                            color: "red"
+                            color: "red",
                           },
-
                         }}
                         onClick={logoutUser}
                       >

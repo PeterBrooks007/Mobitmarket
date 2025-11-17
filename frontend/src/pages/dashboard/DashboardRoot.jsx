@@ -41,8 +41,6 @@ const DashboardRoot = () => {
         // Notify server the user is online
         socket.emit("userOnline", user?._id);
 
-       
-
         // Cleanup event listeners only
         return () => {
           socket?.off("updateStatus");
@@ -60,10 +58,9 @@ const DashboardRoot = () => {
     }
   }, [dispatch, isLoggedIn, user]);
 
-   useEffect(() => {
-      dispatch(getLoginStatus());
-    }, [dispatch, isLoggedIn]);
-  
+  useEffect(() => {
+    dispatch(getLoginStatus());
+  }, [dispatch, isLoggedIn]);
 
   if (!isLoading && isLoggedIn === false) {
     navigate("/auth/login");
@@ -75,11 +72,7 @@ const DashboardRoot = () => {
     return;
   }
 
-  if (
-    !isLoading &&
-    user &&
-    (user?.isIdVerified === "NOT VERIFIED" || user?.isIdVerified === "PENDING")
-  ) {
+  if (!isLoading && user && user?.iskycSetup === false) {
     navigate("/auth/account-setup");
     dispatch(RESET_AUTH());
   }
@@ -103,68 +96,63 @@ const DashboardRoot = () => {
     dispatch(getAllUserTotalCounts());
   }, [dispatch, isLoggedIn]);
 
-
-  
-
   //useeffect for getting allCoinpaprica allCoins price
-    useEffect(() => {
-      if (!user?.currency?.code) {
-        return; // Exit early if user data is not yet available
-      }
-  
-      const checkAndUpdatePrices = () => {
-        const allCoinpaprikaCoinPricesData = localStorage.getItem(
-          "allCoinpaprikaCoinPrices"
+  useEffect(() => {
+    if (!user?.currency?.code) {
+      return; // Exit early if user data is not yet available
+    }
+
+    const checkAndUpdatePrices = () => {
+      const allCoinpaprikaCoinPricesData = localStorage.getItem(
+        "allCoinpaprikaCoinPrices"
+      );
+
+      if (allCoinpaprikaCoinPricesData) {
+        const { savedAt, data } = JSON.parse(allCoinpaprikaCoinPricesData);
+
+        // Check if the data array is empty
+        const isDataEmpty = !data || data.length === 0;
+
+        // Check if any of the data's quote matches the user's currency code
+        const doesCurrencyMatch = data.some(
+          (coin) => coin.quotes[user?.currency?.code]
         );
-  
-        if (allCoinpaprikaCoinPricesData) {
-          const { savedAt, data } = JSON.parse(allCoinpaprikaCoinPricesData);
-  
-          // Check if the data array is empty
-          const isDataEmpty = !data || data.length === 0;
-  
-          // Check if any of the data's quote matches the user's currency code
-          const doesCurrencyMatch = data.some(
-            (coin) => coin.quotes[user?.currency?.code]
-          );
-  
-          // console.log(doesCurrencyMatch);
-  
-          // Convert `savedAt` to Date object and compare time difference
-          const savedAtTime = new Date(savedAt).getTime();
-          const currentTime = new Date().getTime();
-          const fifteenMinutesInMillis = 20 * 60 * 1000; // 15 minutes in milliseconds
-          const timestampPlusFifteenMinutes =
-            savedAtTime + fifteenMinutesInMillis;
-  
-          const hasTimePassedFifteenMinutes =
-            currentTime > timestampPlusFifteenMinutes;
-  
-          // If more than 15 minutes have passed, data is empty, or currency doesn't match
-          if (hasTimePassedFifteenMinutes || isDataEmpty || !doesCurrencyMatch) {
-            dispatch(getAllCoinpaprikaCoinPrices());
-          }
-        } else {
-          // If no data exists in localStorage, dispatch the action immediately
+
+        // console.log(doesCurrencyMatch);
+
+        // Convert `savedAt` to Date object and compare time difference
+        const savedAtTime = new Date(savedAt).getTime();
+        const currentTime = new Date().getTime();
+        const fifteenMinutesInMillis = 20 * 60 * 1000; // 15 minutes in milliseconds
+        const timestampPlusFifteenMinutes =
+          savedAtTime + fifteenMinutesInMillis;
+
+        const hasTimePassedFifteenMinutes =
+          currentTime > timestampPlusFifteenMinutes;
+
+        // If more than 15 minutes have passed, data is empty, or currency doesn't match
+        if (hasTimePassedFifteenMinutes || isDataEmpty || !doesCurrencyMatch) {
           dispatch(getAllCoinpaprikaCoinPrices());
         }
-      };
-  
-      // Initial check
+      } else {
+        // If no data exists in localStorage, dispatch the action immediately
+        dispatch(getAllCoinpaprikaCoinPrices());
+      }
+    };
+
+    // Initial check
+    checkAndUpdatePrices();
+
+    // Set an interval to repeat the check every 15 minutes
+    const intervalId = setInterval(() => {
       checkAndUpdatePrices();
-  
-      // Set an interval to repeat the check every 15 minutes
-      const intervalId = setInterval(() => {
-        checkAndUpdatePrices();
-      }, 5 * 60 * 1000); // 5 minutes in milliseconds
-  
-      // Cleanup the interval on component unmount
-      return () => clearInterval(intervalId);
-    }, [dispatch, user?.currency?.code]);
+    }, 5 * 60 * 1000); // 5 minutes in milliseconds
 
+    // Cleanup the interval on component unmount
+    return () => clearInterval(intervalId);
+  }, [dispatch, user?.currency?.code]);
 
-
-    //code if user is Idle
+  //code if user is Idle
   const idleTimerRef = useRef(null);
   const ONE_MINUTE = 60000; // 1 minute in milliseconds
   const FIVE_MINUTES = 3 * ONE_MINUTE; // 5 minutes in milliseconds
@@ -182,8 +170,7 @@ const DashboardRoot = () => {
     debounce: 500, // Debounce to reduce unnecessary calls
   });
 
-   // end of code if user is Idle
-
+  // end of code if user is Idle
 
   useEffect(() => {
     const allCoinsData = localStorage.getItem("allCoins");

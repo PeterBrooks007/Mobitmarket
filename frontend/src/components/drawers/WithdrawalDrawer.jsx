@@ -234,6 +234,12 @@ const WithdrawalDrawer = ({
 
   const handleContinue = async (e) => {
     e.preventDefault();
+
+    if (user?.isIdVerified !== "VERIFIED") {
+      return toast.error(
+        "ID verification needed to be able to make your withdrawals"
+      );
+    }
     if (user?.withdrawalLocked?.isWithdrawalLocked) {
       return handleOpenWithdrawalLockModal();
     }

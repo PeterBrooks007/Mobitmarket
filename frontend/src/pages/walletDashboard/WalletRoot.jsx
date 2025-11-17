@@ -28,9 +28,8 @@ const WalletRoot = () => {
   const isScrolling = useScrollActivity();
 
   const { user, isLoggedIn, isLoading } = useSelector((state) => state.auth);
-  
 
-    //socket connection
+  //socket connection
   useEffect(() => {
     if (isLoggedIn && user?._id) {
       if (!socket) {
@@ -44,8 +43,6 @@ const WalletRoot = () => {
         // Notify server the user is online
         socket.emit("userOnline", user?._id);
 
-       
-
         // Cleanup event listeners only
         return () => {
           socket?.off("updateStatus");
@@ -54,17 +51,15 @@ const WalletRoot = () => {
     }
   }, [isLoggedIn, user?._id]);
 
-
   useEffect(() => {
     if (isLoggedIn && user === null) {
       dispatch(getUser());
     }
   }, [dispatch, isLoggedIn, user]);
 
-     useEffect(() => {
-        dispatch(getLoginStatus());
-      }, [dispatch, isLoggedIn]);
-    
+  useEffect(() => {
+    dispatch(getLoginStatus());
+  }, [dispatch, isLoggedIn]);
 
   if (!isLoading && isLoggedIn === false) {
     navigate("/auth/login");
@@ -80,11 +75,7 @@ const WalletRoot = () => {
     return;
   }
 
-  if (
-    !isLoading &&
-    user &&
-    (user?.isIdVerified === "NOT VERIFIED" || user?.isIdVerified === "PENDING")
-  ) {
+  if (!isLoading && user && user?.iskycSetup === false) {
     navigate("/auth/account-setup");
     dispatch(RESET_AUTH());
   }
@@ -92,7 +83,6 @@ const WalletRoot = () => {
   useEffect(() => {
     dispatch(getAllUserTotalCounts());
   }, [dispatch, isLoggedIn]);
-  
 
   useEffect(() => {
     if (!user?.currency?.code) {
@@ -217,7 +207,6 @@ const WalletRoot = () => {
       dispatch(getAllCoins());
     }
   }, [dispatch]);
-
 
   return (
     <Box

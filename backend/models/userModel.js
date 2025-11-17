@@ -194,7 +194,7 @@ const userSchema = mongoose.Schema(
       default: "NOT VERIFIED",
       enum: ["NOT VERIFIED", "PENDING", "VERIFIED"],
     },
-    
+
     isEmailVerified: {
       type: Boolean,
       default: false,
@@ -268,6 +268,10 @@ const userSchema = mongoose.Schema(
     tokenExpiry: {
       type: Date,
       default: null,
+    },
+    iskycSetup: {
+      type: Boolean,
+      default: false,
     },
   },
   {

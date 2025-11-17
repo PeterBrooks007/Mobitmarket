@@ -423,6 +423,7 @@ const kycSetup = asyncHandler(async (req, res) => {
             user.currency = updateCurrency || currency;
             user.pin = req.body.userData.pin || pin;
             user.photo = result.secure_url || photo;
+            user.iskycSetup = true;
 
             const updatedUser = await user.save({
               new: true,

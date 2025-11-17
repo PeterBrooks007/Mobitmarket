@@ -10,15 +10,25 @@ import {
   useMediaQuery,
   useTheme,
 } from "@mui/material";
-import { CheckCircle, CloudArrowUp, X, XCircle } from "@phosphor-icons/react";
-import proofofidfront from "../../../assets/proof_of_identity1.png";
+import {
+  Camera,
+  CheckCircle,
+  CloudArrowUp,
+  X,
+  XCircle,
+} from "@phosphor-icons/react";
+import proofofidfront from "../../../assets/front-id.jpg";
+import proofofidback from "../../../assets/back-id.jpg";
 import proofofresidency from "../../../assets/proof_of_residency1.png";
 import { tokens } from "../../../theme";
 import UseWindowSize from "../../../hooks/UseWindowSize";
 import { useDispatch, useSelector } from "react-redux";
 import { useRef, useState } from "react";
 import { toast } from "react-toastify";
-import { residencyVerification } from "../../../redux/features/auth/authSlice";
+import {
+  idVerificationUpload,
+  residencyVerification,
+} from "../../../redux/features/auth/authSlice";
 
 const AccountVerifications = ({ verificationDrawer }) => {
   const theme = useTheme();
@@ -116,6 +126,91 @@ const AccountVerifications = ({ verificationDrawer }) => {
     }
   };
 
+  const [profileImages, setProfileImages] = useState({
+    front: null,
+    back: null,
+  });
+  const [imagePreviews, setImagePreviews] = useState({
+    front: null,
+    back: null,
+  });
+
+  const fileInputRefs = {
+    front: useRef(null),
+    back: useRef(null),
+  };
+
+  const handleButtonClickID = (type) => {
+    if (fileInputRefs[type].current) {
+      fileInputRefs[type].current.click();
+    }
+  };
+
+  const handleImageChangeID = (e, type) => {
+    const file = e.target.files[0];
+    if (file) {
+      setProfileImages((prev) => ({ ...prev, [type]: file }));
+      setImagePreviews((prev) => ({
+        ...prev,
+        [type]: URL.createObjectURL(file),
+      }));
+    }
+  };
+
+  const validateImage = async (file) => {
+    const validImageTypes = ["image/jpeg", "image/jpg", "image/png"];
+    if (!validImageTypes.includes(file.type)) {
+      throw new Error("Invalid file type. Only JPEG and PNG are allowed.");
+    }
+
+    if (file.size > MAX_FILE_SIZE) {
+      throw new Error("File size exceeds the 5MB limit.");
+    }
+
+    const isValidImage = await new Promise((resolve, reject) => {
+      const img = new Image();
+      img.src = URL.createObjectURL(file);
+      img.onload = () => resolve(true);
+      img.onerror = () => reject(false);
+    });
+
+    if (!isValidImage) {
+      throw new Error("The file is not a valid image.");
+    }
+  };
+
+  const handleRequestVerification = async (e) => {
+    e.preventDefault();
+    setUploadLoading(true);
+
+    try {
+      await Promise.all(
+        Object.entries(profileImages).map(async ([type, file]) => {
+          if (!file) throw new Error(`No ${type} image selected.`);
+          await validateImage(file);
+        })
+      );
+
+      const formData = new FormData();
+      formData.append("frontImage", profileImages.front);
+      formData.append("backImage", profileImages.back);
+
+      // Submit the form data (e.g., dispatch or API call here)
+
+      await dispatch(idVerificationUpload(formData));
+
+      // console.log(formData);
+
+      // toast.success("Verification request submitted successfully.");
+
+      setImagePreviews({ front: null, back: null });
+    } catch (error) {
+      toast.error(error.message);
+    } finally {
+      setUploadLoading(false);
+    }
+  };
+
   return (
     <>
       <Stack
@@ -139,172 +234,99 @@ const AccountVerifications = ({ verificationDrawer }) => {
             <Chip
               size="large"
               icon={
-                user?.isIdVerified ? (
-                  <CheckCircle
-                    color={user?.isIdVerified ? undefined : "white"}
-                    size={20}
-                  />
+                user?.isIdVerified === "VERIFIED" ? (
+                  <CheckCircle size={20} />
                 ) : (
-                  <XCircle
-                    color={user?.isIdVerified ? undefined : "white"}
-                    size={20}
-                  />
+                  <XCircle size={20} />
                 )
               }
-              label={user?.isIdVerified ? "VERIFIED" : "NOT VERIFIED"}
-              color={user?.isIdVerified ? "success" : "default"}
-              sx={{
-                backgroundColor: user?.isIdVerified ? undefined : "grey.800",
-                color: user?.isIdVerified ? undefined : "white",
-              }}
+              label={user?.isIdVerified}
+              color={
+                user?.isIdVerified === "VERIFIED"
+                  ? "success"
+                  : user?.isIdVerified === "PENDING"
+                  ? "warning"
+                  : "error"
+              }
             />
           </Typography>
         </Stack>
 
         <Divider />
 
-        <Stack pt={3} spacing={3}>
-          <Stack spacing={1}>
-            <Typography variant="subtitle">
-              Upload the front of the ID
-            </Typography>
-
-            <Stack
-              direction={{ xs: "column", sm: "row" }}
-              display={"flex"}
-              height={{ xs: "auto", sm: "250px" }}
-              spacing={2}
-            >
-              <Box
-                flex={{ lg: "45%", xl: verificationDrawer ? "50%" : "30%" }}
-                sx={{
-                  backgroundColor: `${theme.palette.background}`,
-                  width: "100%",
-                  height: "100%",
-                  border: "2px solid grey",
-                  borderRadius: "20px",
-                }}
-              >
+        <Stack
+          pt={3}
+          direction={{ xs: "column", md: "row" }}
+          alignItems="center"
+          spacing={3}
+        >
+          {["front", "back"].map((type) => (
+            <Stack key={type} spacing={1}>
+              <Typography variant="subtitle" sx={{ pl: 2 }}>
+                Upload the {type} of the ID
+              </Typography>
+              <Box display="flex" justifyContent="center">
                 <img
-                  src={user?.idVerificationPhoto?.front || proofofidfront}
-                  alt="id front"
-                  width={"100%"}
-                  height={"100%"}
-                  style={{ borderRadius: "15px" }}
+                  src={
+                    imagePreviews[type] === null
+                      ? type === "front"
+                        ? user?.idVerificationPhoto.front !== "NOT UPLOADED"
+                          ? user?.idVerificationPhoto.front
+                          : proofofidfront
+                        : user?.idVerificationPhoto.front !== "NOT UPLOADED"
+                        ? user?.idVerificationPhoto.back
+                        : proofofidback
+                      : imagePreviews[type]
+                  }
+                  alt={`${type} ID`}
+                  width="90%"
+                  loading="lazy"
                 />
               </Box>
-              <Box
-                flex={{ lg: "55%", xl: verificationDrawer ? "50%" : "70%" }}
-                display={"flex"}
-                justifyContent={"center"}
-                alignItems={"center"}
-                sx={{
-                  border: "2px dashed grey",
-                  height: { xs: "100%", sm: "100%", md: "100%" },
-                  width: "100%",
-                  borderRadius: "20px",
-                }}
-              >
-                <Stack justifyContent={"center"} alignItems={"center"}>
-                  <CloudArrowUp sx={{ fontSize: { xs: "28px", md: "48px" } }} />
-
-                  <Typography
-                    textAlign={"center"}
-                    p={0.5}
-                    variant={isMobile ? "caption" : "h6"}
-                    color={"grey"}
-                  >
-                    click to upload a file
-                  </Typography>
-                </Stack>
-              </Box>
-            </Stack>
-          </Stack>
-
-          <Divider />
-
-          <Stack spacing={1}>
-            <Typography variant="subtitle">
-              Upload the Back of the ID
-            </Typography>
-
-            <Stack
-              direction={{ xs: "column", sm: "row" }}
-              display={"flex"}
-              height={{ xs: "auto", sm: "250px" }}
-              spacing={2}
-            >
-              <Box
-                flex={{ lg: "45%", xl: verificationDrawer ? "50%" : "30%" }}
-                sx={{
-                  backgroundColor: `${theme.palette.background}`,
-                  width: "100%",
-                  height: "100%",
-                  border: "2px solid grey",
-                  borderRadius: "20px",
-                  overflow: "hidden",
-                }}
-              >
-                <img
-                  src={user?.idVerificationPhoto?.back || proofofidfront}
-                  alt="dummyprofileimg"
-                  width={"100%"}
-                  height={"100%"}
-                  style={{ borderRadius: "15px" }}
+              <Stack direction={"row"} alignItems={"center"} p={2}>
+                <Button
+                  variant="contained"
+                  startIcon={<Camera size={28} />}
+                  disabled={user?.isIdVerified === "PENDING"}
+                  onClick={() => handleButtonClickID(type)}
+                >
+                  Upload {type.charAt(0).toUpperCase() + type.slice(1)} ID
+                </Button>
+                <input
+                  type="file"
+                  accept="image/*"
+                  ref={fileInputRefs[type]}
+                  style={{ display: "none" }}
+                  onChange={(e) => handleImageChangeID(e, type)}
                 />
-              </Box>
-              <Box
-                flex={{ lg: "55%", xl: verificationDrawer ? "50%" : "70%" }}
-                display={"flex"}
-                justifyContent={"center"}
-                alignItems={"center"}
-                sx={{
-                  border: "2px dashed grey",
-                  height: { xs: "100%", sm: "100%", md: "100%" },
-                  width: "100%",
-                  borderRadius: "20px",
-                }}
-              >
-                <Stack justifyContent={"center"} alignItems={"center"}>
-                  <CloudArrowUp sx={{ fontSize: { xs: "28px", md: "48px" } }} />
-
-                  <Typography
-                    textAlign={"center"}
-                    p={0.5}
-                    variant={isMobile ? "caption" : "h6"}
-                    color={"grey"}
-                  >
-                    click to upload a file
-                  </Typography>
-                </Stack>
-              </Box>
+              </Stack>
             </Stack>
-          </Stack>
-
-          <Button
-            fullWidth
-            color="inherit"
-            size="large"
-            type="submit"
-            variant="contained"
-            disabled={user?.isIdVerified}
-            sx={{
-              bgcolor: "text.primary",
-              borderRadius: "10px",
-              padding: "15px",
-              fontWeight: "600",
-              color: (theme) =>
-                theme.palette.mode === "light" ? "common.white" : "grey.800",
-              "&:hover": {
-                bgcolor: "text.primary",
-                color: (theme) =>
-                  theme.palette.mode === "light" ? "common.whitw" : "grey.800",
-              },
-            }}
-          >
-            Request Verification
-          </Button>
+          ))}
         </Stack>
+        <Button
+          fullWidth
+          color="inherit"
+          size="large"
+          type="submit"
+          variant="contained"
+          sx={{
+            bgcolor: "text.primary",
+            borderRadius: "10px",
+            padding: "15px",
+            fontWeight: "600",
+            color: (theme) =>
+              theme.palette.mode === "light" ? "common.white" : "grey.800",
+            "&:hover": {
+              bgcolor: "text.primary",
+              color: (theme) =>
+                theme.palette.mode === "light" ? "common.whitw" : "grey.800",
+            },
+          }}
+          disabled={user?.isIdVerified === "PENDING"}
+          onClick={handleRequestVerification}
+        >
+          Request Verification
+        </Button>
       </Stack>
 
       <Stack
@@ -359,13 +381,15 @@ const AccountVerifications = ({ verificationDrawer }) => {
                 backgroundColor:
                   user?.isResidencyVerified === "VERIFIED"
                     ? undefined
-                    :  user?.isResidencyVerified === "PENDING"
-                    ? "orange" : "grey.800",
+                    : user?.isResidencyVerified === "PENDING"
+                    ? "orange"
+                    : "grey.800",
                 color:
                   user?.isResidencyVerified === "VERIFIED"
                     ? undefined
                     : user?.isResidencyVerified === "PENDING"
-                    ? "black" : "white",
+                    ? "black"
+                    : "white",
               }}
             />
           </Typography>

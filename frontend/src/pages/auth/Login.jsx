@@ -70,7 +70,6 @@ const Login = () => {
   };
 
   useEffect(() => {
-
     if (isSuccess && isLoggedIn && is2FARequired) {
       navigate("/auth/2faAuthentication");
       return;
@@ -87,13 +86,7 @@ const Login = () => {
       return;
     }
 
-    if (
-      isSuccess &&
-      isLoggedIn &&
-      user &&
-      (user?.isIdVerified === "NOT VERIFIED" ||
-        user?.isIdVerified === "PENDING")
-    ) {
+    if (isSuccess && isLoggedIn && user && user?.iskycSetup === true) {
       navigate("/auth/account-setup");
       dispatch(RESET_AUTH());
       return;
@@ -112,7 +105,7 @@ const Login = () => {
         height="90vh"
         justifyContent="space-between"
         position={"relative"}
-        sx={{overflowX: "hidden"}}
+        sx={{ overflowX: "hidden" }}
       >
         <Box
           position={"absolute"}

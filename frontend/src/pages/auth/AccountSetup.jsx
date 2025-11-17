@@ -27,7 +27,7 @@ export default function IdVerificationStepper() {
   const isSmallScreen = useMediaQuery(theme.breakpoints.down("md"));
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  const [activeStep, setActiveStep] = useState(null);
+  const [activeStep, setActiveStep] = useState(0);
 
   const { isLoading, isLoggedIn, user, kycSetupStatus } = useSelector(
     (state) => state.auth
@@ -42,29 +42,29 @@ export default function IdVerificationStepper() {
   };
 
   useEffect(() => {
-    if (user?.isIdVerified === "NOT VERIFIED" && kycSetupStatus === "") {
-      setActiveStep(0);
-      dispatch(RESET_AUTH());
-    }
+    // if (user?.isIdVerified === "NOT VERIFIED" && kycSetupStatus === "") {
+    //   setActiveStep(0);
+    //   dispatch(RESET_AUTH());
+    // }
 
-    if (
-      user?.isIdVerified === "NOT VERIFIED" &&
-      user?.address.address !== "Not provided"
-    ) {
-      setActiveStep(1);
-      dispatch(RESET_AUTH());
-    }
+    // if (
+    //   user?.isIdVerified === "NOT VERIFIED" &&
+    //   user?.address.address !== "Not provided"
+    // ) {
+    //   setActiveStep(1);
+    //   dispatch(RESET_AUTH());
+    // }
 
-    if (user?.isIdVerified === "PENDING") {
-      setActiveStep(2);
-      dispatch(RESET_AUTH());
-    }
+    // if (user?.isIdVerified === "PENDING") {
+    //   setActiveStep(2);
+    //   dispatch(RESET_AUTH());
+    // }
 
-    if (isLoggedIn && user?.isIdVerified === "VERIFIED") {
+    if (isLoggedIn && user?.iskycSetup === true) {
       navigate("/dashboard");
       dispatch(RESET_AUTH());
     }
-  }, [user, dispatch, setActiveStep, kycSetupStatus, isLoggedIn, navigate]);
+  }, [user, dispatch, setActiveStep, isLoggedIn, navigate]);
 
   useEffect(() => {
     if (!isLoading && isLoggedIn === false) {
@@ -132,9 +132,7 @@ export default function IdVerificationStepper() {
                 m={0}
               >
                 <Box mx={-1}>
-                <AuthMobileHeader
-                  accountSetup={true}
-                />
+                  <AuthMobileHeader accountSetup={true} />
                 </Box>
 
                 <Typography variant="h6" sx={{ textAlign: "center", mb: 0 }}>
