@@ -435,7 +435,7 @@ const kycSetup = asyncHandler(async (req, res) => {
             res.status(404);
             throw new Error("User not found");
           }
-        }
+        } 
       )
       .end(compressedImageBuffer); // Use the file buffer for the upload
   } catch (err) {
