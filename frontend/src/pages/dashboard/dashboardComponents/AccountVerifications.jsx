@@ -40,7 +40,7 @@ const AccountVerifications = ({ verificationDrawer }) => {
   const isMobile = useMediaQuery(theme.breakpoints.down("md"));
   const elevation = theme.palette.mode === "light" ? 1 : 0;
 
-  const { isLoading, user } = useSelector((state) => state.auth);
+  const { isLoading, isSemiLoading, user } = useSelector((state) => state.auth);
 
   const [profileImage, setProfileImage] = useState(null);
   const [imagePreview, setImagePreview] = useState(null);

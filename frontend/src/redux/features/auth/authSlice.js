@@ -1121,10 +1121,10 @@ const authSlice = createSlice({
 
       //idVerificationUpload
       .addCase(idVerificationUpload.pending, (state) => {
-        state.isSemiLoading = true;
+        state.isLoading = true;
       })
       .addCase(idVerificationUpload.fulfilled, (state, action) => {
-        state.isSemiLoading = false;
+        state.isLoading = false;
         state.isSuccess = true;
         state.isError = false;
         state.isLoggedIn = true;
@@ -1137,7 +1137,7 @@ const authSlice = createSlice({
         // console.log(action.payload)
       })
       .addCase(idVerificationUpload.rejected, (state, action) => {
-        state.isSemiLoading = false;
+        state.isLoading = false;
         state.isSuccess = false;
         state.isError = true;
         state.message = action.payload;
