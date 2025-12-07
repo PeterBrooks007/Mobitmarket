@@ -34,7 +34,7 @@ const Root = () => {
         // }}
 
       >
-        <MatrixPopup />
+        {/* <MatrixPopup /> */}
         <HomeHeader />
         <Outlet />
         {/* <HomeFooter /> */}
